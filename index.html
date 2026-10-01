@@ -1,0 +1,400 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>기울어진 마을을 구하라</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="style.css">
+
+<div id="app">
+<!-- 마을 풍경 -->
+<header class="scene big" id="scene">
+  <svg viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:var(--sky1)"></stop>
+        <stop offset="1" style="stop-color:var(--sky2)"></stop>
+      </linearGradient>
+    </defs>
+    <rect width="1200" height="300" fill="url(#skyG)"></rect>
+    <circle cx="980" cy="70" r="34" style="fill:var(--sun)"></circle>
+    <g class="cloud c1" style="fill:var(--cloud)"><ellipse cx="200" cy="70" rx="46" ry="14"></ellipse><ellipse cx="228" cy="60" rx="28" ry="14"></ellipse></g>
+    <g class="cloud c2" style="fill:var(--cloud)"><ellipse cx="700" cy="46" rx="38" ry="11"></ellipse><ellipse cx="722" cy="38" rx="22" ry="11"></ellipse></g>
+    <path d="M0 230 Q200 170 420 215 T820 200 T1200 210 V300 H0Z" style="fill:var(--hill-far)"></path>
+
+    <g class="land" id="land">
+      <path d="M-200 236 H1400 V420 H-200Z" style="fill:var(--hill)"></path>
+      <path d="M-200 262 H1400" style="stroke:var(--road);stroke-width:10;stroke-dasharray:28 18"></path>
+      <g style="fill:var(--tree)">
+        <circle cx="150" cy="208" r="20"></circle><circle cx="178" cy="214" r="15"></circle>
+        <circle cx="560" cy="210" r="17"></circle><circle cx="1040" cy="206" r="22"></circle><circle cx="1070" cy="214" r="14"></circle>
+      </g>
+      <g style="fill:var(--trunk)"><rect x="147" y="222" width="6" height="16"></rect><rect x="557" y="222" width="6" height="16"></rect><rect x="1037" y="222" width="6" height="16"></rect></g>
+      <g>
+        <rect x="240" y="186" width="70" height="50" style="fill:var(--wall1)"></rect><polygon points="232,188 275,156 318,188" style="fill:var(--roof1)"></polygon>
+        <rect x="252" y="200" width="14" height="14" class="win"></rect><rect x="284" y="200" width="14" height="14" class="win"></rect>
+        <rect x="330" y="200" width="56" height="36" style="fill:var(--wall2)"></rect><polygon points="324,202 358,176 392,202" style="fill:var(--roof2)"></polygon>
+        <rect x="350" y="214" width="14" height="22" style="fill:var(--roof2)"></rect>
+        <rect x="620" y="180" width="64" height="56" style="fill:var(--wall2)"></rect><polygon points="612,182 652,150 692,182" style="fill:var(--roof1)"></polygon>
+        <rect x="632" y="196" width="14" height="14" class="win"></rect><rect x="658" y="196" width="14" height="14" class="win"></rect>
+        <rect x="860" y="192" width="80" height="44" style="fill:var(--wall1)"></rect><polygon points="852,194 900,162 948,194" style="fill:var(--roof2)"></polygon>
+        <rect x="874" y="206" width="14" height="14" class="win"></rect><rect x="910" y="206" width="14" height="14" class="win"></rect>
+        <rect x="960" y="204" width="48" height="32" style="fill:var(--wall2)"></rect><polygon points="954,206 984,184 1014,206" style="fill:var(--roof1)"></polygon>
+      </g>
+      <g>
+        <rect x="440" y="120" width="90" height="116" rx="6" style="fill:var(--tower)"></rect>
+        <rect x="454" y="136" width="62" height="10" rx="3" class="win"></rect>
+        <rect x="454" y="156" width="62" height="10" rx="3" class="win"></rect>
+        <rect x="454" y="176" width="62" height="10" rx="3" class="win"></rect>
+        <rect x="470" y="206" width="30" height="30" style="fill:var(--sky2)"></rect>
+        <line x1="485" y1="120" x2="485" y2="92" style="stroke:var(--tower);stroke-width:4"></line>
+        <circle cx="485" cy="88" r="6" class="beacon"></circle>
+      </g>
+      <g class="new-house" id="newHouse">
+        <rect x="1100" y="196" width="58" height="40" style="fill:var(--wall1)"></rect><polygon points="1093,198 1129,170 1165,198" style="fill:var(--tilt)"></polygon>
+        <rect x="1112" y="208" width="12" height="12" class="win"></rect><rect x="1134" y="214" width="12" height="22" style="fill:var(--roof2)"></rect>
+      </g>
+      <g>
+        <rect x="748" y="206" width="4" height="30" style="fill:var(--trunk)"></rect>
+        <rect x="714" y="186" width="72" height="24" rx="4" style="fill:var(--sign)"></rect>
+        <text x="750" y="203" text-anchor="middle" class="sign-t">기울어진 마을</text>
+      </g>
+    </g>
+  </svg>
+
+  <div class="level" data-level aria-hidden="true">
+    <span class="level-l">마을 수평계</span>
+    <span class="vial"><i class="tick"></i><i class="bubble"></i></span>
+    <b class="level-n">6°</b>
+  </div>
+</header>
+
+<main class="wrap">
+  <ol class="steps" id="steps" aria-label="진행 상황">
+    <li data-s="1"><button type="button" class="stepbtn" data-go="1" disabled><span class="n">1</span><span>결과 확인</span></button></li>
+    <li data-s="2"><button type="button" class="stepbtn" data-go="2" disabled><span class="n">2</span><span>데이터 탐색</span></button></li>
+    <li data-s="3"><button type="button" class="stepbtn" data-go="3" disabled><span class="n">3</span><span>개선</span></button></li>
+    <li data-s="4"><button type="button" class="stepbtn" data-go="4" disabled><span class="n">4</span><span>재검증</span></button></li>
+  </ol>
+
+  <!-- 0. 시작 -->
+  <section class="screen hero" data-screen="0">
+    <div class="eyebrow">AI 개발자 미션</div>
+    <h1 class="hero-title"><span class="tilted">기울어진</span> 마을을 구하라!</h1>
+    <p class="hero-sub">누구의 가능성도 놓치지 않는 AI 개발자가 되어 보세요.</p>
+    <div class="meta"><span>약 10분</span><span>미션 4개</span><span>개인정보 입력 없음</span></div>
+    <div class="brief">
+      <div class="brief-i"><span class="bi">1</span><p>기울어진 마을은 학생들의 관심과 적성을 분석해 <strong>미래 직업을 추천하는 AI</strong>를 만들었어요.</p></div>
+      <div class="brief-i"><span class="bi">2</span><p>그런데 어떤 학생들에게는 어울리는 직업이 제대로 추천되지 않는다는 문제가 발견되었어요.</p></div>
+      <div class="brief-i"><span class="bi">3</span><p>여러분은 AI 개발자입니다. <strong>AI의 사각지대</strong>를 찾아 더 포용적인 AI로 고쳐 주세요!</p></div>
+    </div>
+    <div class="start-row">
+      <button type="button" class="btn big" id="startBtn">AI 개발 시작하기 <span aria-hidden="true">→</span></button>
+      <button type="button" class="btn big ghost guide-btn" data-guide><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M9 8h6M9 12h5"/></svg>교사용 안내</button>
+    </div>
+  </section>
+
+  <!-- 1. 결과 확인 -->
+  <section class="screen" data-screen="1" hidden>
+    <div class="eyebrow">미션 1 · 결과 확인</div>
+    <h2>두 학생에게 직업을 추천해 봐요</h2>
+    <p class="lead">민준이와 민서는 관심과 적성이 똑같아요.</p>
+    <div class="pair" id="pair"></div>
+    <div class="console">
+      <div class="console-h"><span class="dot"></span>AI 직업 추천 엔진</div>
+      <p class="console-t" id="consoleT">대기 중. 아래 버튼을 눌러 추천을 실행하세요.</p>
+      <div class="scan" id="scan1"></div>
+    </div>
+    <button type="button" class="btn" id="runBtn">AI 직업 추천 실행</button>
+    <div id="q1wrap" class="stack" hidden>
+      <p class="q">관심과 적성이 같은데, 왜 추천 결과가 달라졌을까요?</p>
+      <div class="opts" id="q1"></div>
+      <div class="fb hint" id="fb1" hidden></div>
+      <button type="button" class="btn" id="toData" hidden>AI가 배운 데이터 살펴보기 →</button>
+    </div>
+  </section>
+
+  <!-- 2. 데이터 탐색 -->
+  <section class="screen" data-screen="2" hidden>
+    <div class="eyebrow">미션 2 · 데이터 탐색</div>
+    <h2>AI는 어떻게 추천했을까?</h2>
+    <div class="rule"><span class="chip">AI의 추천 방법</span><p>과거 데이터에서 <b>관심이 비슷하고 성별이 같은 사람들</b>을 찾아, 그 사람들이 가장 많이 가진 직업을 추천해요.</p></div>
+    <div class="bench">
+      <div class="box">
+        <div class="box-h"><h3>민서와 비슷한 사람들</h3><small>여성 · 만들기·수학·컴퓨터·문제 해결</small></div>
+        <div class="sim" id="simMinseo"></div>
+        <p class="sim-h">가장 긴 막대의 직업이 민서에게 추천됐어요.</p>
+      </div>
+      <div class="box" id="dataBox2"></div>
+    </div>
+    <p class="q">데이터에서 어떤 특징을 발견했나요?</p>
+    <div class="opts" id="q2"></div>
+    <div class="fb" id="fb2" hidden></div>
+    <div class="fb info" id="note2" hidden>
+      <p><b>잠깐!</b> 공정함은 숫자를 무조건 50:50으로 맞추는 것이 아니에요. 중요한 것은 두 가지예요.</p>
+      <p>① 다양한 사람의 사례가 충분히 들어 있는가?<br>② 관심이 같은 학생에게 성별과 관계없이 공정한 결과가 나오는가?</p>
+    </div>
+    <button type="button" class="btn" id="toFix" hidden>데이터 고치러 가기 →</button>
+  </section>
+
+  <!-- 3. 개선 -->
+  <section class="screen" data-screen="3" hidden>
+    <div class="eyebrow">미션 3 · 개선</div>
+    <h2>AI 개발자 작업대</h2>
+
+    <div class="work">
+      <div class="work-l">
+        <!-- 실험 1 -->
+        <div class="phase" id="phA">
+          <div class="phase-t"><span class="pn">실험 1</span>데이터를 많이 넣으면 해결될까?</div>
+          <p>지금까지와 <b>같은 방식으로 모은 데이터</b>를 더 넣어 봐요. 막대를 움직이며 민서의 추천을 지켜보세요.</p>
+          <div class="mult">
+            <label for="multRange">같은 방식의 데이터</label>
+            <input type="range" id="multRange" min="1" max="5" step="1" value="1" aria-valuetext="1배">
+            <div class="mult-ticks" aria-hidden="true"><span>×1</span><span>×2</span><span>×3</span><span>×4</span><span>×5</span></div>
+          </div>
+          <div class="mult-read">
+            <div><span class="l">전체 데이터</span><b id="multTotal">710개</b></div>
+            <div><span class="l">민서와 비슷한 사람</span><b id="multRatio">개발자 30 : 교사 50</b></div>
+          </div>
+          <div class="fb hint" id="fbA" hidden></div>
+          <button type="button" class="btn" id="unfloodBtn" hidden>원래 데이터로 돌리고 실험 2 하기 →</button>
+        </div>
+
+        <!-- 실험 2: 예측 -->
+        <div class="phase" id="phB" hidden>
+          <div class="phase-t"><span class="pn">실험 2</span>빠진 사람의 사례 모으기</div>
+          <p class="q">먼저 예측해 봐요. 민서의 추천이 바뀌려면 <b>여성 소프트웨어 개발자</b> 사례를 몇 개 더 모아야 할까요?</p>
+          <div class="opts" id="qPredict"></div>
+        </div>
+
+        <!-- 조절 막대 -->
+        <div class="collect" id="collect3" hidden></div>
+        <div class="fb" id="fb3" hidden></div>
+        <button type="button" class="btn" id="toTest" hidden>다른 친구들에게도 공정한지 테스트하기 →</button>
+      </div>
+
+      <div class="box work-r">
+        <div class="level mini" data-level>
+          <span class="level-l">마을 수평계</span>
+          <span class="vial"><i class="tick"></i><i class="bubble"></i></span>
+          <b class="level-n">6°</b>
+        </div>
+        <div class="box-h"><h3>AI 추천 결과</h3><small>데이터를 바꾸면 바로 다시 계산해요</small></div>
+        <div id="live3"></div>
+      </div>
+    </div>
+
+    <details class="box databox" id="dataWrap3" open><summary><h3>AI가 배운 데이터 상자 보기</h3></summary><div id="dataBox3"></div></details>
+  </section>
+
+  <!-- 4. 재검증 -->
+  <section class="screen" data-screen="4" hidden>
+    <div class="eyebrow">미션 4 · 재검증</div>
+    <h2>공정성 표로 다시 확인해요</h2>
+    <p class="lead">관심이 같은 남학생과 여학생에게 <b>같은 추천</b>이 나오는지 한 줄씩 확인하세요. 다른 줄이 있으면 막대를 조정해 고쳐요.</p>
+
+    <div class="work">
+      <div class="work-l">
+        <div class="collect" id="collect4"></div>
+      </div>
+      <div class="box work-r">
+        <div class="level mini" data-level>
+          <span class="level-l">마을 수평계</span>
+          <span class="vial"><i class="tick"></i><i class="bubble"></i></span>
+          <b class="level-n">6°</b>
+        </div>
+        <div class="box-h"><h3>공정성 표</h3><small>칸을 누르면 AI가 참고한 사람을 볼 수 있어요</small></div>
+        <div class="ftable" id="ftable" role="table" aria-label="공정성 표"></div>
+        <div class="peek" id="peek" hidden></div>
+        <div class="fb" id="fb4" hidden></div>
+        <button type="button" class="btn" id="toHaeun" hidden>새 친구 만나기 →</button>
+      </div>
+    </div>
+
+    <details class="box databox" id="dataWrap4" open><summary><h3>AI가 배운 데이터 상자 보기</h3></summary><div id="dataBox4"></div></details>
+  </section>
+
+  <!-- 4.5 새 친구 -->
+  <section class="screen" data-screen="4.5" hidden>
+    <div class="eyebrow">미션 4 · 재검증 · 새 친구</div>
+    <h2>마을에 새 친구가 이사 왔어요!</h2>
+    <p class="lead">공정해진 AI가 새 친구에게도 잘 추천할 수 있을까요?</p>
+    <div class="newbie">
+      <div class="newbie-av" id="haeunAv"></div>
+      <div class="newbie-t">
+        <h3>하은 <span class="tag f">여</span></h3>
+        <ul class="chips"><li>그림</li><li>동물</li><li>기계</li></ul>
+        <p>관심이 여러 분야에 골고루 걸쳐 있어요.</p>
+      </div>
+    </div>
+    <div class="console">
+      <div class="console-h"><span class="dot"></span>AI 직업 추천 엔진</div>
+      <p class="console-t" id="consoleH">대기 중. 아래 버튼을 눌러 하은이에게 추천을 실행하세요.</p>
+      <div class="scan" id="scanH"></div>
+    </div>
+    <button type="button" class="btn" id="runHaeun">하은이에게 AI 추천 실행</button>
+    <div id="haeunOut" class="stack" hidden>
+      <div class="noresult">
+        <div class="nr-big">지금 데이터로는 추천할 수 없어요!</div>
+        <div class="box nr-sim">
+          <div class="box-h"><h3>하은이와 비슷한 사람</h3><small>여성 · 그림·동물·기계</small></div>
+          <div class="sim" id="simHaeun"></div>
+          <p class="sim-h">AI가 배운 데이터에 하은이 같은 친구가 한 명도 없어요.</p>
+        </div>
+      </div>
+      <p class="q">하은이를 위해 개발자는 어떻게 해야 할까요?</p>
+      <div class="opts" id="qH"></div>
+      <div class="fb" id="fbH" hidden></div>
+      <button type="button" class="btn" id="toMirror" hidden>개발자의 윤리 거울 보기 →</button>
+    </div>
+  </section>
+
+  <!-- 5. 윤리 거울 -->
+  <section class="screen" data-screen="5" hidden>
+    <div class="eyebrow">마지막 · 개발자의 윤리 거울</div>
+    <div class="mirror">
+      <div class="mirror-glass">
+        <h3>AI 사각지대를 비추는<br>개발자 윤리 거울</h3>
+        <button type="button" class="chk"><span class="box2">✓</span>① 누가 빠져 있지는 않은가?</button>
+        <button type="button" class="chk"><span class="box2">✓</span>② 데이터가 한쪽으로 기울어져 있지는 않은가?</button>
+        <button type="button" class="chk"><span class="box2">✓</span>③ 수정한 뒤 다양한 사람에게 다시 확인했는가?</button>
+      </div>
+      <div class="mirror-stand"></div>
+    </div>
+    <p class="key">포용적인 AI를 만들려면 AI가 누구를 놓치고 있는지 살펴보고, 다양한 사람을 생각하며 계속 점검해야 해요.</p>
+    <p class="q">AI 개발자에게 가장 필요한 태도는 무엇일까요?</p>
+    <div class="opts" id="q5"></div>
+    <div class="fb" id="fb5" hidden></div>
+    <button type="button" class="btn big" id="doneBtn" disabled>기울어진 마을 구하기 완료!</button>
+  </section>
+
+  <!-- 6. 완료 -->
+  <section class="screen" data-screen="6" hidden>
+    <div class="eyebrow">미션 완료</div>
+    <h2>마을이 다시 평평해졌어요</h2>
+    <p class="lead" id="summary">여러분이 AI 개발자로서 거쳐 온 과정이에요.</p>
+    <div class="badges" id="badges"></div>
+    <div class="flow">
+      <span>이상한 결과 발견</span><i>→</i><span>AI가 배운 데이터 확인</span><i>→</i><span>빠진 사람 찾기</span><i>→</i><span>데이터 조정</span><i>→</i><span>다시 확인</span>
+    </div>
+    <p class="key lines"><span>AI는 기울어진 데이터를 배우면 불공정한 결과를 낼 수 있어요.</span><span>누가 빠져 있는지 살펴보고 고쳐서, <b class="hl">모두에게 공정하고 포용적인 AI</b>를 만드는 것이 개발자의 책임이에요.</span></p>
+    <div class="btn-row"><button type="button" class="btn big" id="againBtn">처음으로 돌아가기 ↺</button></div>
+    <p class="sim-h">진행 단계(1~4)를 누르면 원하는 단계로 돌아가 다시 살펴볼 수 있어요.</p>
+  </section>
+
+  <footer class="foot">
+    <span>이 체험은 이름이나 개인정보를 입력받거나 저장하지 않아요.</span>
+    <button type="button" class="linkbtn" data-guide>교사용 안내</button>
+  </footer>
+</main>
+
+<!-- 미션 목표 팝업 -->
+<div class="modal" id="goalModal" role="dialog" aria-modal="true" aria-labelledby="goalT" hidden>
+  <div class="modal-card">
+    <button type="button" class="peek-x modal-x" data-close="goalModal" aria-label="닫기">×</button>
+    <div class="modal-scene">
+      <div class="big-level"><span class="vial"><i class="tick"></i><i class="bubble" style="transform:translateX(-44px)"></i></span></div>
+      <svg class="mini-village" viewBox="0 0 300 90" aria-hidden="true"><g class="mv-land"><rect x="-40" y="62" width="380" height="60" style="fill:var(--hill)"></rect><rect x="40" y="36" width="44" height="26" style="fill:var(--wall1)"></rect><polygon points="34,38 62,16 90,38" style="fill:var(--roof1)"></polygon><rect x="50" y="44" width="9" height="9" class="win"></rect><rect x="126" y="14" width="48" height="48" rx="4" style="fill:var(--tower)"></rect><rect x="134" y="22" width="32" height="6" rx="2" class="win"></rect><rect x="134" y="34" width="32" height="6" rx="2" class="win"></rect><rect x="210" y="38" width="46" height="24" style="fill:var(--wall2)"></rect><polygon points="204,40 233,20 262,40" style="fill:var(--roof2)"></polygon><circle cx="110" cy="52" r="10" style="fill:var(--tree)"></circle><circle cx="278" cy="50" r="12" style="fill:var(--tree)"></circle></g></svg>
+    </div>
+    <div class="eyebrow">미션 목표</div>
+    <h2 id="goalT">기울어진 마을을 평평하게 만들어라!</h2>
+    <p class="lines"><span>마을은 AI가 <b>불공정한 추천</b>을 할수록 기울어져요.</span><span>지금 기울기는 <b class="tilt-num">8°</b>예요.</span></p>
+    <p class="modal-sub lines"><span>작업하는 동안 오른쪽 위 <b>마을 수평계</b>를 확인하세요.</span><span>물방울이 가운데로 오면 성공이에요.</span></p>
+    <button type="button" class="btn big" id="goalOk">미션 시작!</button>
+  </div>
+</div>
+
+<!-- 성공 팝업 -->
+<div class="modal" id="levelModal" role="dialog" aria-modal="true" aria-labelledby="levelT" hidden>
+  <div class="modal-card">
+    <button type="button" class="peek-x modal-x" data-close="levelModal" aria-label="닫기">×</button>
+    <div class="modal-scene ok">
+      <div class="big-level"><span class="vial"><i class="tick"></i><i class="bubble"></i></span></div>
+      <svg class="mini-village flat" viewBox="0 0 300 90" aria-hidden="true"><g class="mv-land"><rect x="-40" y="62" width="380" height="60" style="fill:var(--hill)"></rect><rect x="40" y="36" width="44" height="26" style="fill:var(--wall1)"></rect><polygon points="34,38 62,16 90,38" style="fill:var(--roof1)"></polygon><rect x="50" y="44" width="9" height="9" class="win"></rect><rect x="126" y="14" width="48" height="48" rx="4" style="fill:var(--tower)"></rect><rect x="134" y="22" width="32" height="6" rx="2" class="win"></rect><rect x="134" y="34" width="32" height="6" rx="2" class="win"></rect><rect x="210" y="38" width="46" height="24" style="fill:var(--wall2)"></rect><polygon points="204,40 233,20 262,40" style="fill:var(--roof2)"></polygon><circle cx="110" cy="52" r="10" style="fill:var(--tree)"></circle><circle cx="278" cy="50" r="12" style="fill:var(--tree)"></circle></g></svg>
+    </div>
+    <div class="eyebrow">마을 기울기 0°</div>
+    <h2 id="levelT">마을이 평평해졌어요!</h2>
+    <p class="lines"><span>이제 관심이 같으면</span><span>성별과 관계없이 같은 직업이 추천돼요.</span></p>
+    <div class="modal-note" id="levelNote"></div>
+    <button type="button" class="btn big" id="levelOk">새 친구 만나기 →</button>
+  </div>
+</div>
+
+<!-- 교사용 안내 -->
+<div class="modal" id="guideModal" role="dialog" aria-modal="true" aria-labelledby="guideT" hidden>
+  <div class="modal-card wide guide-card">
+    <div class="guide-top">
+      <div><div class="eyebrow">교사용 안내</div><h2 id="guideT">수업 운영 가이드</h2></div>
+      <button type="button" class="peek-x guide-x" id="guideX" aria-label="닫기">×</button>
+    </div>
+    <div class="tabs" role="tablist" aria-label="안내 메뉴">
+      <button type="button" role="tab" class="tab" data-tab="intent" aria-selected="true">의도</button>
+      <button type="button" role="tab" class="tab" data-tab="flow" aria-selected="false">흐름</button>
+      <button type="button" role="tab" class="tab" data-tab="how" aria-selected="false">원리</button>
+      <button type="button" role="tab" class="tab" data-tab="myth" aria-selected="false">오개념</button>
+      <button type="button" role="tab" class="tab" data-tab="ask" aria-selected="false">핵심 발문</button>
+    </div>
+
+    <div class="tabpanel" role="tabpanel" data-panel="intent">
+      <p class="tp-lead">학습 데이터의 편향을 직접 찾아 고치며, <b>공정하고 포용적인 인공지능</b>을 만드는 개발자의 책임을 체험합니다.</p>
+      <ol class="intent-flow"><li>AI 결과 확인</li><li>사각지대 발견</li><li>학습 데이터 분석</li><li>데이터 개선</li><li>다시 테스트</li></ol>
+      <div class="intent-grid">
+        <div><h4>왜 웹앱인가요?</h4><p>AI가 학생이 모은 데이터로 실제로 다시 계산해요. 결과가 미리 정해져 있지 않아요.</p></div>
+        <div><h4>공정함의 기준은?</h4><p>50:50이 아니라, <b>관심이 같으면 같은 결과</b>가 나오는지예요.</p></div>
+        <div><h4>왜 수집 기회가 정해져 있나요?</h4><p>한정된 기회 안에서 누구의 데이터가 꼭 필요한지 고민하게 해요.</p></div>
+        <div><h4>왜 새 친구가 오나요?</h4><p>AI는 한 번에 완벽해지지 않고, 계속 확인해야 함을 보여 줘요.</p></div>
+      </div>
+    </div>
+
+    <div class="tabpanel" role="tabpanel" data-panel="flow" hidden>
+      <ol class="timeline">
+        <li><span class="tm">1분</span><b>결과 확인</b><span>관심이 같은 민준·민서의 추천이 다름을 발견</span></li>
+        <li><span class="tm">2분</span><b>데이터 탐색</b><span>민서와 비슷한 사람 중 개발자가 적은 이유 찾기</span></li>
+        <li><span class="tm">3분</span><b>개선</b><span>데이터 늘리기(실험 1) → 빠진 사례 모으기(실험 2)</span></li>
+        <li><span class="tm">3분</span><b>재검증</b><span>공정성 표를 모두 ✓로 맞추고, 새 친구 하은이에게도 확인</span></li>
+        <li><span class="tm">1분</span><b>정리</b><span>윤리 거울 세 질문으로 마무리</span></li>
+      </ol>
+      <p class="total">총 <b>10분</b></p>
+      <p class="sim-h">진행 단계 번호를 누르면 지나온 단계로 돌아갈 수 있어요.</p>
+    </div>
+
+    <div class="tabpanel" role="tabpanel" data-panel="how" hidden>
+      <div class="rule"><span class="chip">AI의 추천 방법</span><p>과거 데이터에서 <b>관심 유형과 성별이 같은 사람들</b>을 모아, 가장 많은 직업을 추천해요.</p></div>
+      <div class="nums">
+        <div><b>710개</b><span>처음 데이터 (아이콘 1개 = 10개)</span></div>
+        <div><b>교사 50 : 개발자 30</b><span>민서와 비슷한 사람</span></div>
+        <div><b>+30개</b><span>민서의 추천이 바뀌는 지점</span></div>
+        <div><b>80회 / 최소 70회</b><span>수집 기회 / 모든 줄을 고치는 데 필요</span></div>
+      </div>
+      <p class="sim-h">마을 기울기: ✗ 줄 1개, △ 줄 0.5개로 세어 8° → 0°</p>
+    </div>
+
+    <div class="tabpanel" role="tabpanel" data-panel="myth" hidden>
+      <div class="myths">
+        <div><p class="myth">데이터가 많으면 편향이 사라진다?</p><p class="fix">실험 1: 5배로 늘려도 비율 3 : 5 그대로</p></div>
+        <div><p class="myth">50:50이면 공정하다?</p><p class="fix">남 160 · 여 60에서도 결과가 공정해짐</p></div>
+        <div><p class="myth">데이터만 고치면 완벽하다?</p><p class="fix">다른 줄이 남고, 새 친구 하은이는 추천 불가</p></div>
+        <div><p class="myth">AI가 일부러 차별한다?</p><p class="fix">AI는 데이터 속 패턴을 그대로 배웠을 뿐</p></div>
+      </div>
+    </div>
+
+    <div class="tabpanel" role="tabpanel" data-panel="ask" hidden>
+      <ul class="asks">
+        <li><span class="when">결과 확인</span>적성과 관심사가 같은데 왜 다른 직업을 추천했을까요?</li>
+        <li><span class="when">데이터 탐색</span>직업 추천 인공지능에서 어떤 편향을 발견했나요?</li>
+        <li><span class="when">개선</span>데이터 수가 많아졌는데 왜 결과가 그대로였을까요?</li>
+        <li><span class="when">재검증</span>AI를 고친 뒤에도 사각지대에 남아 있는 사람은 누구일까요?</li>
+        <li><span class="when">정리</span>공정한 인공지능을 만들려면 개발자는 어떻게 해야 할까요?</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+</div>
+
+<script src="model.js"></script>
+<script src="art.js"></script>
+<script src="app.js"></script>
